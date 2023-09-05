@@ -1,5 +1,6 @@
 const autoBind = require('auto-bind');
 const ClientError = require('../../exceptions/ClientError');
+const NotFoundError = require('../../exceptions/NotFoundError');
 
 class UsersHandler {
   constructor(service, validator) {
@@ -58,12 +59,19 @@ class UsersHandler {
         },
       };
     } catch (error) {
-      if (error instanceof ClientError) {
+      if (error instanceof NotFoundError) {
         const response = h.response({
           status: 'fail',
           message: error.message,
         });
-        response.code(error.statusCode);
+        response.code(404);
+        return response;
+      } if (error instanceof ClientError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        });
+        response.code(404);
         return response;
       }
 
@@ -76,6 +84,17 @@ class UsersHandler {
       console.error(error);
       return response;
     }
+  }
+
+  // get all users
+  async getUsersHandler() {
+    const users = await this._service.getUsers();
+    return {
+      status: 'success',
+      data: {
+        users,
+      },
+    };
   }
 }
 
